@@ -11,6 +11,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -20,14 +21,14 @@ jobs:
         with:
           node-version: '20'
 
+      # Frontend is at repository root
       - name: Install Frontend Dependencies
-        working-directory: ./frontend
         run: npm install
 
       - name: Build Frontend
-        working-directory: ./frontend
         run: npm run build
 
+      # Backend is inside backend/
       - name: Install Backend Dependencies
         working-directory: ./backend
         run: npm install
@@ -36,21 +37,24 @@ jobs:
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
     steps:
       - name: Deploy to Render
         env:
-          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          DEPLOY_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          if [ -z "$deploy_url" ]; then
+          if [ -z "$DEPLOY_URL" ]; then
             echo "RENDER_DEPLOY_HOOK_URL secret is not set."
             exit 1
           fi
-          curl -X POST $deploy_url
+
+          curl -X POST "$DEPLOY_URL"
 
   deploy-frontend:
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -58,8 +62,7 @@ jobs:
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./frontend
+          vercel_token: ${{ secrets.VERCEL_TOKEN }}
+          vercel_org_id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel_project_id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
