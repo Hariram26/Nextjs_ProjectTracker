@@ -21,11 +21,13 @@ jobs:
         with:
           node-version: '20'
 
-      # Frontend is at repository root
+      # Frontend is inside frontend/
       - name: Install Frontend Dependencies
+        working-directory: ./frontend
         run: npm install
 
       - name: Build Frontend
+        working-directory: ./frontend
         run: npm run build
 
       # Backend is inside backend/
@@ -65,4 +67,5 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend
           vercel-args: '--prod'
