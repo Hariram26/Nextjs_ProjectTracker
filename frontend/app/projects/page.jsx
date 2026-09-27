@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { HiOutlineTrash, HiOutlinePlus, HiOutlineExclamation, HiOutlineDocumentText, HiOutlineDeviceMobile, HiOutlineGlobeAlt, HiOutlineShoppingCart, HiOutlineFolder, HiOutlineUsers, HiOutlineBriefcase, HiOutlineClipboardList, HiOutlineArrowRight } from "react-icons/hi";
+import { HiOutlineTrash, HiOutlinePlus, HiOutlineExclamation, HiOutlineDocumentText, HiOutlineDeviceMobile, HiOutlineGlobeAlt, HiOutlineShoppingCart, HiOutlineFolder, HiOutlineUsers, HiOutlineBriefcase, HiOutlineClipboardList, HiOutlineArrowRight, HiOutlineSearch, HiOutlineFilter } from "react-icons/hi";
 
 const getProjectIcon = (name) => {
     const lowerName = name.toLowerCase();
@@ -20,16 +20,16 @@ export default function Projects() {
     const [projects, setProjects] = useState([]);
 
     // --- Modal state ---
-    // showModal: controls whether the confirm popup is visible
-    // confirmId: remembers which project the user wants to delete
     const [showModal, setShowModal] = useState(false);
     const [confirmId, setConfirmId] = useState(null);
 
     // --- Add Project Modal state ---
-    // showAddModal: controls whether the Add Project popup is visible
-    // newProjectName: tracks what the user types in the input field
     const [showAddModal, setShowAddModal] = useState(false);
     const [newProjectName, setNewProjectName] = useState("");
+
+    // --- Search & Filter state ---
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("All");
 
     // Fetch projects from API
     const fetchProjects = async () => {
@@ -121,6 +121,13 @@ export default function Projects() {
     // Find the project name to display in the delete modal
     const projectToDelete = projects.find(p => p._id === confirmId);
 
+    // --- Filtered projects for display ---
+    const filteredProjects = projects.filter(project => {
+        const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === "All" || project.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
     return (
         <div className="container mx-auto px-6 py-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -137,15 +144,64 @@ export default function Projects() {
                 </button>
             </div>
 
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* ── Search & Filter bar ── */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                {/* Search input */}
+                <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <HiOutlineSearch className="h-4 w-4 text-zinc-400" />
+                    </div>
+                    <input
+                        id="project-search"
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search projects by name..."
+                        className="block w-full pl-9 pr-4 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-transparent transition-all text-sm shadow-sm"
+                    />
+                </div>
+
+                {/* Status filter */}
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <HiOutlineFilter className="h-4 w-4 text-zinc-400" />
+                    </div>
+                    <select
+                        id="status-filter"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="pl-9 pr-8 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-600 focus:border-transparent transition-all text-sm shadow-sm appearance-none cursor-pointer"
+                    >
+                        <option value="All">All Statuses</option>
+                        <option value="Todo">Todo</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Result count */}
+            {(searchQuery || statusFilter !== 'All') && (
+                <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+                    Showing <span className="font-semibold text-zinc-700 dark:text-zinc-300">{filteredProjects.length}</span> of {projects.length} projects
+                </p>
+            )}
+
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.length === 0 ? (
                     <div className="col-span-full p-8 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50">
                         <p className="text-center text-zinc-500 dark:text-zinc-400 text-lg">
                             No projects found. Go to the Home page to add your first project!
                         </p>
                     </div>
+                ) : filteredProjects.length === 0 ? (
+                    <div className="col-span-full p-8 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50">
+                        <p className="text-center text-zinc-500 dark:text-zinc-400 text-lg">
+                            No projects match your search or filter.
+                        </p>
+                    </div>
                 ) : (
-                    projects.map(project => (
+                    filteredProjects.map(project => (
                         <div key={project._id} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between h-full transition-all hover:shadow-md">
                             <div>
                                 <div className="flex justify-between items-start gap-4 mb-2">
